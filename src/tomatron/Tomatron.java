@@ -16,7 +16,9 @@ public class Tomatron {
 	private TrayIcon trayIcon = new TrayIcon(Utils.createTrayIconImage("P",
 			0.75, new Color(100, 100, 100)));
 	private final SystemTray tray = SystemTray.getSystemTray();
+	private int completedPomodoros = 0;
 
+	MenuItem pomodoroCountItem = new MenuItem("Completed Pomodoros: 0");
 	MenuItem pomodoroItem = new MenuItem("Start Pomodoro");
 	MenuItem shortBreakItem = new MenuItem("Short Break");
 	MenuItem longBreakItem = new MenuItem("Long Break");
@@ -56,6 +58,7 @@ public class Tomatron {
 					case pomodoro:
 						trayIcon.displayMessage("Pomodoro finished",
 								"Time for a break!", TrayIcon.MessageType.NONE);
+						completedPomodoros++;
 						break;
 					case longBreak:
 					case shortBreak:
@@ -77,6 +80,8 @@ public class Tomatron {
 	 * Updates the tray icon and tooltip
 	 */
 	private void updatePomodoroInfo() {
+		pomodoroCountItem.setEnabled(false);
+		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", completedPomodoros));
 		String shortTimeLeftString;
 		if (secondsRemaining > 60) {
 			shortTimeLeftString = Integer.toString(secondsRemaining / 60);
@@ -167,6 +172,8 @@ public class Tomatron {
 	 */
 	private void populateMenu() {
 		final PopupMenu popup = new PopupMenu();
+		popup.add(pomodoroCountItem);
+		popup.addSeparator();
 		popup.add(pomodoroItem);
 		popup.add(shortBreakItem);
 		popup.add(longBreakItem);
