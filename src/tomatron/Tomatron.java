@@ -1,6 +1,6 @@
 package tomatron;
 
-import java.util.Timer;
+import java.util.Timer;	
 import java.util.TimerTask;
 import java.awt.*;
 import java.awt.event.*;
@@ -13,7 +13,7 @@ public class Tomatron {
 	}
 
 	private PomodoroState state = PomodoroState.inactive;
-	private TrayIcon trayIcon = new TrayIcon(Utils.createTrayIconImage("P",
+	private TrayIcon trayIcon = new TrayIcon(TomatronUtils.createTrayIconImage("P",
 			0.75, new Color(100, 100, 100)));
 	private final SystemTray tray = SystemTray.getSystemTray();
 	private int completedPomodoros = 0;
@@ -94,28 +94,28 @@ public class Tomatron {
 
 		switch (state) {
 		case pomodoro:
-			trayIcon.setImage(Utils.createTrayIconImage(shortTimeLeftString,
+			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
 					0.75, new Color(130, 30, 30)));
 			trayIcon.setToolTip(String.format(
 					"Pomodoro in progress\nRemaining: %s", timeLeftString)
 					.toString());
 			break;
 		case shortBreak:
-			trayIcon.setImage(Utils.createTrayIconImage(shortTimeLeftString,
+			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
 					0.75, new Color(20, 100, 40)));
 			trayIcon.setToolTip(String.format(
 					"Short break in progress\nRemaining: %s", timeLeftString)
 					.toString());
 			break;
 		case longBreak:
-			trayIcon.setImage(Utils.createTrayIconImage(shortTimeLeftString,
+			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
 					0.75, new Color(10, 80, 150)));
 			trayIcon.setToolTip(String.format(
 					"Long break in progress\nRemaining: %s", timeLeftString)
 					.toString());
 			break;
 		case inactive:
-			trayIcon.setImage(Utils.createTrayIconImage("P", 0.75, new Color(
+			trayIcon.setImage(TomatronUtils.createTrayIconImage("P", 0.75, new Color(
 					100, 100, 100)));
 			trayIcon.setToolTip(String.format("Tomatron: inactive",
 					timeLeftString).toString());

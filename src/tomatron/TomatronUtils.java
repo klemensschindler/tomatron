@@ -11,7 +11,7 @@ import java.awt.SystemTray;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-public class Utils {
+public class TomatronUtils {
 	/**
 	 * Create a tray icon image.
 	 * 
