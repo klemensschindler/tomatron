@@ -4,6 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
 import javax.swing.*;
 
@@ -44,6 +45,20 @@ public class Tomatron {
 		});
 	}
 	
+	private void displayDesktopNotification(String summary, String message)
+	{
+		try {
+			// Try notify-send. This is usually available on linux
+			String[] cmd = {"notify-send", summary, message};
+			Process notifySend = Runtime.getRuntime().exec(cmd);
+			notifySend.waitFor();
+		} catch (IOException | InterruptedException e) {
+			// Java AWT tray icon notification.
+			// Looks fine on Windows. Works on Linux as a fallback, but does not look so good
+			trayIcon.displayMessage(summary, message, TrayIcon.MessageType.NONE);		
+		}
+	}
+	
 	/**
 	 * Task that is triggered every second.
 	 * Automatically transitions the state upon timer expiration and updates information presented to the user.
@@ -56,15 +71,12 @@ public class Tomatron {
 					// A break or pomodoro is finished
 					switch (state) {
 					case pomodoro:
-						trayIcon.displayMessage("Pomodoro finished",
-								"Time for a break!", TrayIcon.MessageType.NONE);
+						displayDesktopNotification("Pomodoro finished", "Time for a break!");
 						completedPomodoros++;
 						break;
 					case longBreak:
 					case shortBreak:
-						trayIcon.displayMessage("Break finished",
-								"You can start a pomodoro when ready.",
-								TrayIcon.MessageType.NONE);
+						displayDesktopNotification("Break finished", "You can start a new pomodoro when ready.");
 						break;
 					default:
 						break;
