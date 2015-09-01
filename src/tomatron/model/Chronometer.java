@@ -19,12 +19,12 @@ public class Chronometer implements IChronometer {
 	public int getCurrentTime() {  return minutes; }
 
 	public void attach(Observer o) {
-		if (o != null && !obs.Contains(o))
+		if (o != null)
 			obs.add(o);
 	}
 
 	public void detach(Observer o) { 
-		if (o != null && obs.Contains(o))
+		if (o != null && obs.contains(o))
 			obs.remove(o);
 	}
 
