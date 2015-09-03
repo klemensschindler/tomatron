@@ -1,6 +1,7 @@
 package tomatron.model;
 
 public interface IChronometer extends Observable{
+
 	enum STATE { 
 		STOPPED("stopped"),
 		RUNNING("running"),
@@ -24,8 +25,6 @@ public interface IChronometer extends Observable{
 	void stop();
 	void setMinutes(int minutes);
 	int getMinutes();
-	int getCurrentTime();
-
+	double getCurrentTime();
 	STATE getState();
-
 }
