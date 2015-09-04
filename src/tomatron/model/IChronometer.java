@@ -25,6 +25,6 @@ public interface IChronometer extends Observable{
 	void stop();
 	void setMinutes(int minutes);
 	int getMinutes();
-	double getCurrentTime();
+	int getCurrentTime();
 	STATE getState();
 }

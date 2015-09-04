@@ -1,23 +1,20 @@
-package tomatron;
+package tomatron.view;
 
-import java.util.Timer;	
-import java.util.TimerTask;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 
 import javax.swing.*;
 
-public class Tomatron {	
-	enum PomodoroState {
-		inactive, pomodoro, shortBreak, longBreak
-	}
+import tomatron.model.*;
+import tomatron.model.PomodoroExecuter;
 
-	private PomodoroState state = PomodoroState.inactive;
-	private TrayIcon trayIcon = new TrayIcon(TomatronUtils.createTrayIconImage("P",
-			0.75, new Color(100, 100, 100)));
+public class Tomatron implements Observer{	
+
+	private TrayIcon trayIcon = new TrayIcon(
+			TomatronUtils.createTrayIconImage("P", 0.75,
+				new Color(100, 100, 100)));
 	private final SystemTray tray = SystemTray.getSystemTray();
-	private int completedPomodoros = 0;
 
 	MenuItem pomodoroCountItem = new MenuItem("Completed Pomodoros: 0");
 	MenuItem pomodoroItem = new MenuItem("Start Pomodoro");
@@ -26,25 +23,60 @@ public class Tomatron {
 	MenuItem cancelItem = new MenuItem("Cancel");
 	MenuItem exitItem = new MenuItem("Exit");
 
-	int secondsRemaining = 0;
-	Timer timer = new Timer();
-	
+	Observable o = null;
+	PomodoroExecuter pomExec;
+
+	public void setObservable(Observable o) {
+		this.o = o;
+	}
+
+	public void update() {
+		IPomodoro p = (Pomodoro)o.getUpdate(this);
+		switch(p.getState()) {
+			case RUNNING:
+				break;
+			case PAUSED:
+				break;
+			case STOPPED:
+				break;
+			case FINISHED:
+				switch(pomExec.type) {
+					case work:
+						displayDesktopNotification("Pomodoro finished", 
+								"Time for a break!");
+						break;
+					case shortBreak:
+					case longBreak:
+						displayDesktopNotification("Break finished", 
+								"You can start a new pomodoro when ready.");
+						break;
+				}
+				break;
+		}
+	}
+
+	public void minorUpdate() {
+		IPomodoro p = (Pomodoro)o.getUpdate(this);
+		updatePomodoroInfo(p.getCurrentTime());
+	}
+
 	public Tomatron() {
-		setState(PomodoroState.inactive);
 		try {
 			tray.add(trayIcon);
 		} catch (AWTException e) {
 			System.err.println("TrayIcon could not be added.");
 			System.exit(1);
 		}
-		
+
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				populateMenu();
 			}
 		});
+
+		pomExec = new PomodoroExecuter();
 	}
-	
+
 	private void displayDesktopNotification(String summary, String message)
 	{
 		try {
@@ -58,42 +90,14 @@ public class Tomatron {
 			trayIcon.displayMessage(summary, message, TrayIcon.MessageType.NONE);		
 		}
 	}
-	
-	/**
-	 * Task that is triggered every second.
-	 * Automatically transitions the state upon timer expiration and updates information presented to the user.
-	 */
-	class EverySecond extends TimerTask {
-		public void run() {
-			if (state != PomodoroState.inactive) {
-				secondsRemaining--;
-				if (secondsRemaining <= 0) {
-					// A break or pomodoro is finished
-					switch (state) {
-					case pomodoro:
-						displayDesktopNotification("Pomodoro finished", "Time for a break!");
-						completedPomodoros++;
-						break;
-					case longBreak:
-					case shortBreak:
-						displayDesktopNotification("Break finished", "You can start a new pomodoro when ready.");
-						break;
-					default:
-						break;
-					}
-					setState(PomodoroState.inactive);
-				}
-			}
-			updatePomodoroInfo();
-		}
-	}
 
 	/**
 	 * Updates the tray icon and tooltip
 	 */
-	private void updatePomodoroInfo() {
+	private void updatePomodoroInfo(int secondsRemaining) {
 		pomodoroCountItem.setEnabled(false);
-		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", completedPomodoros));
+		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", 
+					pomExec.getCompletedPomodoros()));
 		String shortTimeLeftString;
 		if (secondsRemaining > 60) {
 			shortTimeLeftString = Integer.toString(secondsRemaining / 60);
@@ -104,79 +108,78 @@ public class Tomatron {
 		String timeLeftString = String.format("%02d:%02d",
 				(secondsRemaining / 60), secondsRemaining % 60);
 
-		switch (state) {
-		case pomodoro:
-			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
-					0.75, new Color(130, 30, 30)));
-			trayIcon.setToolTip(String.format(
-					"Pomodoro in progress\nRemaining: %s", timeLeftString)
-					.toString());
-			break;
-		case shortBreak:
-			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
-					0.75, new Color(20, 100, 40)));
-			trayIcon.setToolTip(String.format(
-					"Short break in progress\nRemaining: %s", timeLeftString)
-					.toString());
-			break;
-		case longBreak:
-			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
-					0.75, new Color(10, 80, 150)));
-			trayIcon.setToolTip(String.format(
-					"Long break in progress\nRemaining: %s", timeLeftString)
-					.toString());
-			break;
-		case inactive:
-			trayIcon.setImage(TomatronUtils.createTrayIconImage("P", 0.75, new Color(
-					100, 100, 100)));
-			trayIcon.setToolTip(String.format("Tomatron: inactive",
-					timeLeftString).toString());
-			break;
+		switch (pomExec.type) {
+			case work:
+				trayIcon.setImage(TomatronUtils.createTrayIconImage(
+							shortTimeLeftString, 0.75, new Color(130, 30, 30)));
+				trayIcon.setToolTip(String.format(
+						"Pomodoro in progress\nRemaining: %s",
+							timeLeftString)
+						.toString());
+				break;
+			case shortBreak:
+				trayIcon.setImage(TomatronUtils.createTrayIconImage(
+							shortTimeLeftString, 0.75, new Color(20, 100, 40)));
+				trayIcon.setToolTip(String.format(
+						"Short break in progress\nRemaining: %s",
+							timeLeftString) .toString());
+				break;
+			case longBreak:
+				trayIcon.setImage(TomatronUtils.createTrayIconImage(
+							shortTimeLeftString, 0.75, new Color(10, 80, 150)));
+				trayIcon.setToolTip(String.format(
+						"Long break in progress\nRemaining: %s",
+							timeLeftString) .toString());
+				break;
+			default:
+				trayIcon.setImage(TomatronUtils.createTrayIconImage("P", 0.75, 
+						new Color( 100, 100, 100)));
+				trayIcon.setToolTip(String.format("Tomatron: inactive",
+							timeLeftString).toString());
+				break;
 		}
 	}
 
 	/**
 	 * Execute state transition and update UI/timers accordingly
-	 * @param newState new state to assume
+	 * @param type new type to assume
 	 */
-	private void setState(PomodoroState newState) {
+	private void execByState(PomodoroExecuter.PomodoroType type) {
 		pomodoroItem.setLabel("Start Pomodoro");
 		shortBreakItem.setLabel("Start Short Break");
 		longBreakItem.setLabel("Start Long Break");
 		cancelItem.setLabel("Cancel");
-		cancelItem.setEnabled(true);
+		cancelItem.setEnabled(true); 
 
-		timer.cancel();
-		
-		state = newState;
-		switch (state) {
-		case pomodoro:
-			pomodoroItem.setLabel("Restart Pomodoro");
-			cancelItem.setLabel("Void Pomodoro");
-			secondsRemaining = 25 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
-			break;
-		case shortBreak:
-			shortBreakItem.setLabel("Restart Short Break");
-			cancelItem.setLabel("Cancel Break");
-			secondsRemaining = 5 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
-			break;
-		case longBreak:
-			longBreakItem.setLabel("Restart Long Break");
-			cancelItem.setLabel("Cancel Break");
-			secondsRemaining = 15 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
-			break;
-		case inactive:
+		if(type == null) {
+			pomExec.stopPomodoro();
 			cancelItem.setEnabled(false);
-			secondsRemaining = 0;
-			break;
 		}
-		updatePomodoroInfo();
+		else {
+			switch (type) {
+				case work:
+					pomodoroItem.setLabel("Restart Pomodoro");
+					cancelItem.setLabel("Cancel Pomodoro");
+					pomExec.initPomodoro(
+							PomodoroExecuter.PomodoroType.work);
+					break;
+				case shortBreak:
+					shortBreakItem.setLabel("Restart Short Break");
+					cancelItem.setLabel("Cancel Break");
+					pomExec.initPomodoro(
+							PomodoroExecuter.PomodoroType.shortBreak);
+					break;
+				case longBreak:
+					longBreakItem.setLabel("Restart Long Break");
+					cancelItem.setLabel("Cancel Break");
+					pomExec.initPomodoro(
+							PomodoroExecuter.PomodoroType.longBreak);
+					break;
+			}
+			pomExec.getPomodoro().attach(this);
+			setObservable(pomExec.getPomodoro());
+			pomExec.startPomodoro();
+		}
 	}
 
 	/**
@@ -196,30 +199,31 @@ public class Tomatron {
 
 		pomodoroItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setState(PomodoroState.pomodoro);
+				execByState(PomodoroExecuter.PomodoroType.work);
 			}
 		});
 
 		shortBreakItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setState(PomodoroState.shortBreak);
+				execByState(PomodoroExecuter.PomodoroType.shortBreak);
 			}
 		});
 
 		longBreakItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setState(PomodoroState.longBreak);
+				execByState(PomodoroExecuter.PomodoroType.longBreak);
 			}
 		});
 
 		cancelItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setState(PomodoroState.inactive);
+				execByState(null);
 			}
 		});
 
 		exitItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				pomExec.endExecution();
 				tray.remove(trayIcon);
 				System.exit(0);
 			}
@@ -228,13 +232,13 @@ public class Tomatron {
 		trayIcon.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JOptionPane.showMessageDialog(null,
-						"You can use Tomatron by right clicking on the system tray icon.");
+						"Try right clicking on the system tray icon.");
 			}
 		});
 
 		trayIcon.setPopupMenu(popup);
 	}
-	
+
 	public static void main(String[] args) {
 		if (!SystemTray.isSupported()) {
 			System.err.println("System tray is not supported on this system");

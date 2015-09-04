@@ -41,8 +41,8 @@ public class Chronometer extends TimerTask implements IChronometer, Cloneable {
 		return minutes;
 	}
 
-	public double getCurrentTime() {
-		return secondsRemaining / 60;
+	public int getCurrentTime() {
+		return secondsRemaining;
 	}
 
 	public STATE getState() {

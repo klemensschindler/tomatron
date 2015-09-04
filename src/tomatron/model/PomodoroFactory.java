@@ -4,19 +4,19 @@ public class PomodoroFactory implements IChronometerCreator{
 
 	public IChronometer createWorkPomodoro(){ 
 		Pomodoro p = new Pomodoro();
-		p.setMinutes(25);
+		p.setMinutes(Pomodoro.getDefaultWorkDuration());
 		return p;
 	}
 
 	public IChronometer createLongBreakPomodoro(){ 
 		Pomodoro p = new Pomodoro();
-		p.setMinutes(15);
+		p.setMinutes(Pomodoro.getDefaultLongBreakDuration());
 		return p;
 	}
 
 	public IChronometer createShortBreakPomodoro(){ 
 		Pomodoro p = new Pomodoro();
-		p.setMinutes(5);
+		p.setMinutes(Pomodoro.getDefaultShortBreakDuration());
 		return p;
 	}
 
