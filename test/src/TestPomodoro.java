@@ -17,23 +17,20 @@ public class TestPomodoro implements Observer{
 	}
 		
 	public void minorUpdate() {
-		IPomodoro p = (Pomodoro)o.getUpdate(this);
 		System.out.println("tack");
+		IPomodoro p = (Pomodoro)o.getUpdate(this);
 		System.out.println(p.getCurrentTime() + "min");
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) 
+			throws InterruptedException, CloneNotSupportedException {
 		IChronometerCreator icc = new PomodoroFactory();
-		Pomodoro p = (Pomodoro) icc.createPomodoro();
+		Pomodoro p = (Pomodoro) icc.createWorkPomodoro();
 		TestPomodoro t = new TestPomodoro();
-		t.setObservable(p);
+		System.out.println("Pomodoro state observer:OFF");
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(p, 0, 1000L);
-		//TestPomodoro t1 = new TestPomodoro();
-		//t1.setObservable(p);
-		//TestPomodoro t2 = new TestPomodoro();
-		//t2.setObservable(p);
-		System.out.println("Pomodoro state observer:OFF");
+		Thread.sleep(2000);
 		p.start();
 		Thread.sleep(2000);
 		p.pause();
@@ -42,7 +39,37 @@ public class TestPomodoro implements Observer{
 		Thread.sleep(2000);
 		timer.cancel();
 		System.out.println("Pomodoro state observer:ON");
+		p = (Pomodoro) icc.createLongBreakPomodoro();
+		t.setObservable(p);
+		TestPomodoro t1 = new TestPomodoro();
+		t1.setObservable(p);
+		TestPomodoro t2 = new TestPomodoro();
+		t2.setObservable(p);
 		p.attach(t);
+		p.attach(t1);
+		p.attach(t2);
+		timer = new Timer();
+		timer.scheduleAtFixedRate(p, 0, 1000L);
+		p.start();
+		Thread.sleep(3000);
+		p.pause();
+		Thread.sleep(3000);
+		p.detach(t);
+		p.detach(t1);
+		p.detach(t2);
+		System.out.println("detached Observers");
+		Thread.sleep(3000);
+		p.start();
+		System.out.println("attached Observers");
+		p.attach(t);
+		p.attach(t1);
+		p.attach(t2);
+		Thread.sleep(3000);
+		p.stop();
+		Thread.sleep(3000);
+		timer.cancel();
+		System.out.println("Pomodoro state observer:OFF, no tick");
+		p = (Pomodoro) icc.createShortBreakPomodoro();
 		timer = new Timer();
 		timer.scheduleAtFixedRate(p, 0, 1000L);
 		p.start();
@@ -52,13 +79,6 @@ public class TestPomodoro implements Observer{
 		p.stop();
 		Thread.sleep(3000);
 		timer.cancel();
-		System.out.println("Pomodoro state observer:OFF, no tick");
-		p.detach(t);
-		//p.detach(t1);
-		//p.detach(t2);
-		p.start();
-		p.pause();
-		p.stop();
 		System.out.println("TEST END");
 	}
 }

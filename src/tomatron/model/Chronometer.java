@@ -3,11 +3,11 @@ package tomatron.model;
 import java.util.*;
 import java.util.TimerTask;
 
-public class Chronometer extends TimerTask implements IChronometer {
+public class Chronometer extends TimerTask implements IChronometer, Cloneable {
 
 	protected int minutes;
 	protected Set<Observer> obs;
-	private STATE state;
+	private STATE state = null;
 	protected Integer secondsRemaining = null;
 
 	public Chronometer() {
@@ -17,6 +17,8 @@ public class Chronometer extends TimerTask implements IChronometer {
 	public void start() {
 		System.out.println("Started"); 
 		if (getState() != STATE.RUNNING) {
+			if(secondsRemaining == null)
+				secondsRemaining = new Integer(minutes * 60);
 			setState(STATE.RUNNING);
 		}
 	}
@@ -31,9 +33,17 @@ public class Chronometer extends TimerTask implements IChronometer {
 		setState(STATE.STOPPED);
 	}
 
-	public void setMinutes(int minutes) { this.minutes = minutes; }
-	public int getMinutes() {  return minutes; }
-	public double getCurrentTime() {  return secondsRemaining / 60; }
+	public void setMinutes(int minutes) {
+		this.minutes = minutes; 
+	}
+
+	public int getMinutes() { 
+		return minutes;
+	}
+
+	public double getCurrentTime() {
+		return secondsRemaining / 60;
+	}
 
 	public STATE getState() {
 		return this.state;
@@ -75,29 +85,32 @@ public class Chronometer extends TimerTask implements IChronometer {
 	 */
 	@Override
 	public void run() {
-		switch(getState()) {
-			case RUNNING:
-				if(secondsRemaining == null)
-					secondsRemaining = new Integer(minutes * 60);
-				if(secondsRemaining <= 0) {
-					setState(STATE.FINISHED);
-				}
-				else {
-					System.out.println("tick!");
-					secondsRemaining--;
-					notifyMinorUpdate();
-				}
-				break;
-			case PAUSED:
-				System.out.println("ignored tick!");
-				break;
-			case STOPPED:
-			case FINISHED:
-				System.out.println("Canceling.");
-				this.cancel();
-				break;
+		// check if the state is ready (start methods was called).
+		// Avoids error in case when the timer is trigged before the
+		// start method
+		if(getState() != null) {
+			switch(getState()) {
+				case RUNNING:
+					if(secondsRemaining <= 0) {
+						setState(STATE.FINISHED);
+					}
+					else {
+						System.out.println("tick!");
+						secondsRemaining--;
+						notifyMinorUpdate();
+					}
+					break;
+				case PAUSED:
+					System.out.println("ignored tick!");
+					break;
+				case STOPPED:
+				case FINISHED:
+					System.out.println("Canceling.");
+					this.cancel();
+					break;
+			}
+			System.out.println(secondsRemaining + "s");
 		}
-		System.out.println(secondsRemaining + "s");
 	}
 
 }
