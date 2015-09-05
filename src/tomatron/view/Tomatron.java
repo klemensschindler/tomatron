@@ -32,12 +32,37 @@ public class Tomatron implements Observer{
 
 	public void update() {
 		IPomodoro p = (Pomodoro)o.getUpdate(this);
+
 		switch(p.getState()) {
 			case RUNNING:
+				switch(pomExec.type) {
+					case work:
+						displayDesktopNotification("Pomodoro is Running", 
+								"Time to WORK!");
+						break;
+					case shortBreak:
+					case longBreak:
+						displayDesktopNotification("Break is Running", 
+								"Time to RELAX!");
+						break;
+				}
 				break;
 			case PAUSED:
-				break;
 			case STOPPED:
+				switch(pomExec.type) {
+					case work:
+						displayDesktopNotification("Pomodoro Interrupted", 
+								"Start a new one when You are feeling ready!");
+						break;
+					case shortBreak:
+					case longBreak:
+						displayDesktopNotification("Break Interrupted", 
+								"Start a new Pomodoro if You are feeling ready!");
+						break;
+				}
+				p.detach(this);
+				pomExec.stopPomodoro();
+				execByPomodoroType(pomExec.type);
 				break;
 			case FINISHED:
 				switch(pomExec.type) {
@@ -48,11 +73,15 @@ public class Tomatron implements Observer{
 					case shortBreak:
 					case longBreak:
 						displayDesktopNotification("Break finished", 
-								"You can start a new pomodoro when ready.");
+								"You can start a new pomodoro when ready!");
 						break;
 				}
+				p.detach(this);
+				pomExec.stopPomodoro();
+				execByPomodoroType(pomExec.type);
 				break;
 		}
+		updatePomodoroInfo();
 	}
 
 	public void minorUpdate() {
@@ -94,45 +123,51 @@ public class Tomatron implements Observer{
 	 * Updates the tray icon and tooltip
 	 */
 	private void updatePomodoroInfo() {
+		int secsLeft = 0;
+		String timeLeftString = "";
+		String timeLeft = "";
+
+		// only retrieve the pomodoro current time if its a valid pomodoro
+		if(pomExec.type != PomodoroExecuter.PomodoroType.inactive) {
+			secsLeft = ((Pomodoro)o.getUpdate(this)).getCurrentTime();
+			if (secsLeft > 60) {
+				timeLeft = Integer.toString(secsLeft / 60);
+			} else {
+				timeLeft = Integer.toString(secsLeft);
+			}
+			timeLeftString = String.format("%02d:%02d",
+					(secsLeft / 60), secsLeft % 60);
+		}
+
 		pomodoroCountItem.setEnabled(false);
 		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", 
 					pomExec.getCompletedPomodoros()));
-		int secsLeft = ((Pomodoro)o.getUpdate(this)).getCurrentTime();
-		String timeLeft;
-		if (secsLeft > 60) {
-			timeLeft = Integer.toString(secsLeft / 60);
-		} else {
-			timeLeft = Integer.toString(secsLeft);
-		}
-
-		String timeLeftString = String.format("%02d:%02d",
-				(secsLeft / 60), secsLeft % 60);
 
 		switch (pomExec.type) {
 			case work:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
 							timeLeft, 0.75, new Color(130, 30, 30)));
 				trayIcon.setToolTip(String.format(
-						"Pomodoro in progress\nRemaining: %s",
+							"Pomodoro in progress\nRemaining: %s",
 							timeLeftString).toString());
 				break;
 			case shortBreak:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
 							timeLeft, 0.75, new Color(20, 100, 40)));
 				trayIcon.setToolTip(String.format(
-						"Short break in progress\nRemaining: %s",
+							"Short break in progress\nRemaining: %s",
 							timeLeftString).toString());
 				break;
 			case longBreak:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
 							timeLeft, 0.75, new Color(10, 80, 150)));
 				trayIcon.setToolTip(String.format(
-						"Long break in progress\nRemaining: %s",
+							"Long break in progress\nRemaining: %s",
 							timeLeftString).toString());
 				break;
-			default:
+			case inactive:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage("P", 0.75, 
-						new Color( 100, 100, 100)));
+							new Color( 100, 100, 100)));
 				trayIcon.setToolTip(String.format("Pomodoro inactive."));
 				break;
 		}
@@ -142,12 +177,23 @@ public class Tomatron implements Observer{
 	 * Execute state transition and update UI/timers accordingly
 	 * @param type new type to assume
 	 */
-	private void execByState(PomodoroExecuter.PomodoroType type) {
+	private void execByPomodoroType(PomodoroExecuter.PomodoroType type) {
 		pomodoroItem.setLabel("Start Pomodoro");
 		shortBreakItem.setLabel("Start Short Break");
 		longBreakItem.setLabel("Start Long Break");
 		cancelItem.setLabel("Cancel");
 		cancelItem.setEnabled(true); 
+		// if its a restart, its unecessary to handle the stop update;
+		// it can be the first execution (o with null value)
+		if(o != null) {
+			Pomodoro p = (Pomodoro)o.getUpdate(this);
+			// check if the pomodoro it's not current stopped (already detached)
+			if(p != null) {
+				// it can be a cancel action (type inactive)
+				if(type != PomodoroExecuter.PomodoroType.inactive) 
+					p.detach(this);
+			}
+		}
 
 		switch (type) {
 			case work:
@@ -174,12 +220,12 @@ public class Tomatron implements Observer{
 				updatePomodoroInfo();
 				break;
 
-			}
-			if(type != PomodoroExecuter.PomodoroType.inactive) {
-				pomExec.getPomodoro().attach(this);
-				setObservable(pomExec.getPomodoro());
-				pomExec.startPomodoro();
-			}
+		}
+		if(type != PomodoroExecuter.PomodoroType.inactive) {
+			pomExec.getPomodoro().attach(this);
+			setObservable(pomExec.getPomodoro());
+			pomExec.startPomodoro();
+		}
 	}
 
 	/**
@@ -199,25 +245,25 @@ public class Tomatron implements Observer{
 
 		pomodoroItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				execByState(PomodoroExecuter.PomodoroType.work);
+				execByPomodoroType(PomodoroExecuter.PomodoroType.work);
 			}
 		});
 
 		shortBreakItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				execByState(PomodoroExecuter.PomodoroType.shortBreak);
+				execByPomodoroType(PomodoroExecuter.PomodoroType.shortBreak);
 			}
 		});
 
 		longBreakItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				execByState(PomodoroExecuter.PomodoroType.longBreak);
+				execByPomodoroType(PomodoroExecuter.PomodoroType.longBreak);
 			}
 		});
 
 		cancelItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				execByState(PomodoroExecuter.PomodoroType.inactive);
+				execByPomodoroType(PomodoroExecuter.PomodoroType.inactive);
 			}
 		});
 
