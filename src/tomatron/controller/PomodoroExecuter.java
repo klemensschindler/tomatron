@@ -1,10 +1,11 @@
-package tomatron.model;
+package tomatron.controller;
 
 import java.util.Timer;	
+import tomatron.model.*;
 
 public class PomodoroExecuter implements Observer{
 	public enum PomodoroType {
-		work, shortBreak, longBreak
+		inactive, work, shortBreak, longBreak
 	}
 
 	public PomodoroType type;
@@ -26,13 +27,16 @@ public class PomodoroExecuter implements Observer{
 	}
 
 	public void stopPomodoro() {
-		if(p != null)
+		if(p != null) {
 			p.stop();
+			p = null;
+			type = PomodoroType.inactive;
+		}
+		timer.purge();
 	}
 
 	public void endExecution() { 
 		stopPomodoro();
-		timer.purge();
 		timer.cancel();
 	}
 
@@ -47,6 +51,8 @@ public class PomodoroExecuter implements Observer{
 
 	public void initPomodoro(PomodoroType type) {
 		IChronometerCreator icc = new PomodoroFactory();
+		// A pomodoro can be executing
+		stopPomodoro();
 		this.type = type;
 		switch(this.type) {
 			case work:

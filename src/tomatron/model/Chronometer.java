@@ -15,7 +15,7 @@ public class Chronometer extends TimerTask implements IChronometer, Cloneable {
 	}
 
 	public void start() {
-		System.out.println("Started"); 
+		System.out.println("Chronometer Started"); 
 		if (getState() != STATE.RUNNING) {
 			if(secondsRemaining == null)
 				secondsRemaining = new Integer(minutes * 60);
@@ -24,12 +24,12 @@ public class Chronometer extends TimerTask implements IChronometer, Cloneable {
 	}
 
 	public void pause() {  
-		System.out.println("Paused"); 
+		System.out.println("Chronometer Paused"); 
 		setState(STATE.PAUSED);
 	}
 
 	public void stop() {
-		System.out.println("Stopped");
+		System.out.println("Chronometer Stopped");
 		setState(STATE.STOPPED);
 	}
 
@@ -95,21 +95,17 @@ public class Chronometer extends TimerTask implements IChronometer, Cloneable {
 						setState(STATE.FINISHED);
 					}
 					else {
-						System.out.println("tick!");
 						secondsRemaining--;
 						notifyMinorUpdate();
 					}
 					break;
 				case PAUSED:
-					System.out.println("ignored tick!");
 					break;
 				case STOPPED:
 				case FINISHED:
-					System.out.println("Canceling.");
 					this.cancel();
 					break;
 			}
-			System.out.println(secondsRemaining + "s");
 		}
 	}
 

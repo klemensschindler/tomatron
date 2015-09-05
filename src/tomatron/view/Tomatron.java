@@ -7,7 +7,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 import tomatron.model.*;
-import tomatron.model.PomodoroExecuter;
+import tomatron.controller.PomodoroExecuter;
 
 public class Tomatron implements Observer{	
 
@@ -56,8 +56,7 @@ public class Tomatron implements Observer{
 	}
 
 	public void minorUpdate() {
-		IPomodoro p = (Pomodoro)o.getUpdate(this);
-		updatePomodoroInfo(p.getCurrentTime());
+		updatePomodoroInfo();
 	}
 
 	public Tomatron() {
@@ -94,48 +93,47 @@ public class Tomatron implements Observer{
 	/**
 	 * Updates the tray icon and tooltip
 	 */
-	private void updatePomodoroInfo(int secondsRemaining) {
+	private void updatePomodoroInfo() {
 		pomodoroCountItem.setEnabled(false);
 		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", 
 					pomExec.getCompletedPomodoros()));
-		String shortTimeLeftString;
-		if (secondsRemaining > 60) {
-			shortTimeLeftString = Integer.toString(secondsRemaining / 60);
+		int secsLeft = ((Pomodoro)o.getUpdate(this)).getCurrentTime();
+		String timeLeft;
+		if (secsLeft > 60) {
+			timeLeft = Integer.toString(secsLeft / 60);
 		} else {
-			shortTimeLeftString = Integer.toString(secondsRemaining);
+			timeLeft = Integer.toString(secsLeft);
 		}
 
 		String timeLeftString = String.format("%02d:%02d",
-				(secondsRemaining / 60), secondsRemaining % 60);
+				(secsLeft / 60), secsLeft % 60);
 
 		switch (pomExec.type) {
 			case work:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
-							shortTimeLeftString, 0.75, new Color(130, 30, 30)));
+							timeLeft, 0.75, new Color(130, 30, 30)));
 				trayIcon.setToolTip(String.format(
 						"Pomodoro in progress\nRemaining: %s",
-							timeLeftString)
-						.toString());
+							timeLeftString).toString());
 				break;
 			case shortBreak:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
-							shortTimeLeftString, 0.75, new Color(20, 100, 40)));
+							timeLeft, 0.75, new Color(20, 100, 40)));
 				trayIcon.setToolTip(String.format(
 						"Short break in progress\nRemaining: %s",
-							timeLeftString) .toString());
+							timeLeftString).toString());
 				break;
 			case longBreak:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage(
-							shortTimeLeftString, 0.75, new Color(10, 80, 150)));
+							timeLeft, 0.75, new Color(10, 80, 150)));
 				trayIcon.setToolTip(String.format(
 						"Long break in progress\nRemaining: %s",
-							timeLeftString) .toString());
+							timeLeftString).toString());
 				break;
 			default:
 				trayIcon.setImage(TomatronUtils.createTrayIconImage("P", 0.75, 
 						new Color( 100, 100, 100)));
-				trayIcon.setToolTip(String.format("Tomatron: inactive",
-							timeLeftString).toString());
+				trayIcon.setToolTip(String.format("Pomodoro inactive."));
 				break;
 		}
 	}
@@ -151,35 +149,37 @@ public class Tomatron implements Observer{
 		cancelItem.setLabel("Cancel");
 		cancelItem.setEnabled(true); 
 
-		if(type == null) {
-			pomExec.stopPomodoro();
-			cancelItem.setEnabled(false);
-		}
-		else {
-			switch (type) {
-				case work:
-					pomodoroItem.setLabel("Restart Pomodoro");
-					cancelItem.setLabel("Cancel Pomodoro");
-					pomExec.initPomodoro(
-							PomodoroExecuter.PomodoroType.work);
-					break;
-				case shortBreak:
-					shortBreakItem.setLabel("Restart Short Break");
-					cancelItem.setLabel("Cancel Break");
-					pomExec.initPomodoro(
-							PomodoroExecuter.PomodoroType.shortBreak);
-					break;
-				case longBreak:
-					longBreakItem.setLabel("Restart Long Break");
-					cancelItem.setLabel("Cancel Break");
-					pomExec.initPomodoro(
-							PomodoroExecuter.PomodoroType.longBreak);
-					break;
+		switch (type) {
+			case work:
+				pomodoroItem.setLabel("Restart Pomodoro");
+				cancelItem.setLabel("Cancel Pomodoro");
+				pomExec.initPomodoro(
+						PomodoroExecuter.PomodoroType.work);
+				break;
+			case shortBreak:
+				shortBreakItem.setLabel("Restart Short Break");
+				cancelItem.setLabel("Cancel Break");
+				pomExec.initPomodoro(
+						PomodoroExecuter.PomodoroType.shortBreak);
+				break;
+			case longBreak:
+				longBreakItem.setLabel("Restart Long Break");
+				cancelItem.setLabel("Cancel Break");
+				pomExec.initPomodoro(
+						PomodoroExecuter.PomodoroType.longBreak);
+				break;
+			case inactive:
+				pomExec.stopPomodoro();
+				cancelItem.setEnabled(false);
+				updatePomodoroInfo();
+				break;
+
 			}
-			pomExec.getPomodoro().attach(this);
-			setObservable(pomExec.getPomodoro());
-			pomExec.startPomodoro();
-		}
+			if(type != PomodoroExecuter.PomodoroType.inactive) {
+				pomExec.getPomodoro().attach(this);
+				setObservable(pomExec.getPomodoro());
+				pomExec.startPomodoro();
+			}
 	}
 
 	/**
@@ -217,7 +217,7 @@ public class Tomatron implements Observer{
 
 		cancelItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				execByState(null);
+				execByState(PomodoroExecuter.PomodoroType.inactive);
 			}
 		});
 
