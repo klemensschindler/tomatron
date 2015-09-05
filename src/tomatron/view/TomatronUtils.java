@@ -1,4 +1,4 @@
-package tomatron;
+package tomatron.view;
 
 import java.awt.Color;
 import java.awt.Dimension;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tomatron 
+Type=Application
+Exec=java -jar /usr/local/bin/tomatron
+Terminal=false
+Icon=tomatron
+Comment=Pomodoro Chronometer
+NoDisplay=false
+Categories=Office;

@@ -1,15 +1,16 @@
 # Tomatron
-Simple pomodoro timer in the system tray.
+Simple and extensible pomodoro timer in the system tray.
 
 ## Description 
 Tomatron aims to be a simple pomodoro timer with the following features:
+- Extensible in every way
 - Timer functions operatable from the system tray
 - Cross-platform (at least Linux and Windows)
 - Completed pomodoro count display
 - Desktop notifications on completed pomodoro/break
 - Minimal build dependencies
 
-The application is heavily inspired by tomighty: http://tomighty.org/.
+The applications started from a fork of Tomatron
 
 ## Usage
 Run the jar file. A tray icon (``P`` on a grey background) is displayed.
@@ -25,8 +26,29 @@ The icon color and text is as follows
 
 Remaining time is given in minutes if more than a minute is left. If less then a minute is left, the remaining seconds are displayed.
 
-## Build instructions
-- Get Eclipse for Java developers from: https://www.eclipse.org/downloads/
-- Import the project into the workspace
-- Right click the project > Export > Java > Runnable JAR File
+## INSTALL
+###Ubuntu with Unity
+From ```tomatron``` directory execute:
+```bash
+# install.sh
+```
+Run from Unity Dash
+
+###Another Enviroment
+- From ```tomatron/src``` directory execute:
+```bash
+ # javac -verbose -d ../bin/classes ./tomatron/model/*.java ./tomatron/controller/*.java  ./tomatron/view/*.java && jar vcmf Manifest.txt ../bin/tomatron -C ../bin/classes .;
+```
+Run from terminal
+```bash
+ $ java -jar ../bin/tomatron
+```
+## UNINSTALL
+###Ubuntu with Unity
+- From ```tomatron``` directory execute:
+```bash
+# uninstall.sh
+```
+ 
+
 
