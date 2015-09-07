@@ -22,6 +22,7 @@ public class Tomatron {
 
 	MenuItem pomodoroCountItem = new MenuItem("Completed Pomodoros: 0");
 	MenuItem pomodoroItem = new MenuItem("Start Pomodoro");
+	MenuItem addTimeItem = new MenuItem("Add 2 minutes");
 	MenuItem shortBreakItem = new MenuItem("Short Break");
 	MenuItem longBreakItem = new MenuItem("Long Break");
 	CheckboxMenuItem pausedItem = new CheckboxMenuItem("Paused");
@@ -161,7 +162,8 @@ public class Tomatron {
 		cancelItem.setLabel("Cancel");
 		cancelItem.setEnabled(true);
 		pausedItem.setEnabled(false);
-
+		addTimeItem.setEnabled(true);
+		
 		timer.cancel();
 		
 		state = newState;
@@ -172,6 +174,7 @@ public class Tomatron {
 			pausedItem.setEnabled(true);
 			pausedItem.setState(false);
 			paused = false;
+			addTimeItem.setEnabled(true);
 			secondsRemaining = 25 * 60;
 			timer = new Timer();
 			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
@@ -192,6 +195,7 @@ public class Tomatron {
 			break;
 		case inactive:
 			cancelItem.setEnabled(false);
+			addTimeItem.setEnabled(false);
 			secondsRemaining = 0;
 			break;
 		}
@@ -206,6 +210,7 @@ public class Tomatron {
 		popup.add(pomodoroCountItem);
 		popup.addSeparator();
 		popup.add(pomodoroItem);
+		popup.add(addTimeItem);
 		popup.add(shortBreakItem);
 		popup.add(longBreakItem);
 		popup.addSeparator();
@@ -218,6 +223,12 @@ public class Tomatron {
 		pomodoroItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setState(PomodoroState.pomodoro);
+			}
+		});
+		
+		addTimeItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				secondsRemaining += 120;
 			}
 		});
 
