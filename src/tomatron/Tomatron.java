@@ -18,11 +18,13 @@ public class Tomatron {
 			0.75, new Color(100, 100, 100)));
 	private final SystemTray tray = SystemTray.getSystemTray();
 	private int completedPomodoros = 0;
+	private boolean paused = false;
 
 	MenuItem pomodoroCountItem = new MenuItem("Completed Pomodoros: 0");
 	MenuItem pomodoroItem = new MenuItem("Start Pomodoro");
 	MenuItem shortBreakItem = new MenuItem("Short Break");
 	MenuItem longBreakItem = new MenuItem("Long Break");
+	CheckboxMenuItem pausedItem = new CheckboxMenuItem("Paused");
 	MenuItem cancelItem = new MenuItem("Cancel");
 	MenuItem restartCountItem = new MenuItem("Restart Pomodoro Count");
 	MenuItem exitItem = new MenuItem("Exit");
@@ -67,7 +69,10 @@ public class Tomatron {
 	class EverySecond extends TimerTask {
 		public void run() {
 			if (state != PomodoroState.inactive) {
-				secondsRemaining--;
+				if (!paused) {
+					secondsRemaining--;
+				}
+				
 				if (secondsRemaining <= 0) {
 					// A break or pomodoro is finished
 					switch (state) {
@@ -107,11 +112,20 @@ public class Tomatron {
 
 		switch (state) {
 		case pomodoro:
-			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
-					0.75, new Color(130, 30, 30)));
-			trayIcon.setToolTip(String.format(
-					"Pomodoro in progress\nRemaining: %s", timeLeftString)
-					.toString());
+			if (!paused) {
+				trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
+						0.75, new Color(130, 30, 30)));
+				trayIcon.setToolTip(String.format(
+						"Pomodoro in progress\nRemaining: %s", timeLeftString)
+						.toString());
+			}
+			else {
+				trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
+						0.75, new Color(100, 100, 100)));
+				trayIcon.setToolTip(String.format(
+						"Pomodoro paused\nRemaining: %s", timeLeftString)
+						.toString());
+			}
 			break;
 		case shortBreak:
 			trayIcon.setImage(TomatronUtils.createTrayIconImage(shortTimeLeftString,
@@ -146,6 +160,7 @@ public class Tomatron {
 		longBreakItem.setLabel("Start Long Break");
 		cancelItem.setLabel("Cancel");
 		cancelItem.setEnabled(true);
+		pausedItem.setEnabled(false);
 
 		timer.cancel();
 		
@@ -154,6 +169,9 @@ public class Tomatron {
 		case pomodoro:
 			pomodoroItem.setLabel("Restart Pomodoro");
 			cancelItem.setLabel("Void Pomodoro");
+			pausedItem.setEnabled(true);
+			pausedItem.setState(false);
+			paused = false;
 			secondsRemaining = 25 * 60;
 			timer = new Timer();
 			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
@@ -191,6 +209,7 @@ public class Tomatron {
 		popup.add(shortBreakItem);
 		popup.add(longBreakItem);
 		popup.addSeparator();
+		popup.add(pausedItem);
 		popup.add(cancelItem);
 		popup.addSeparator();
 		popup.add(restartCountItem);
@@ -213,7 +232,15 @@ public class Tomatron {
 				setState(PomodoroState.longBreak);
 			}
 		});
-
+		
+		pausedItem.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				paused = pausedItem.getState();
+				updatePomodoroInfo();
+			}
+		});
+		
 		cancelItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setState(PomodoroState.inactive);
