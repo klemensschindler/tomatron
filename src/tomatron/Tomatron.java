@@ -24,6 +24,7 @@ public class Tomatron {
 	MenuItem shortBreakItem = new MenuItem("Short Break");
 	MenuItem longBreakItem = new MenuItem("Long Break");
 	MenuItem cancelItem = new MenuItem("Cancel");
+	MenuItem restartCountItem = new MenuItem("Restart Pomodoro Count");
 	MenuItem exitItem = new MenuItem("Exit");
 
 	int secondsRemaining = 0;
@@ -192,6 +193,7 @@ public class Tomatron {
 		popup.addSeparator();
 		popup.add(cancelItem);
 		popup.addSeparator();
+		popup.add(restartCountItem);
 		popup.add(exitItem);
 
 		pomodoroItem.addActionListener(new ActionListener() {
@@ -215,6 +217,13 @@ public class Tomatron {
 		cancelItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setState(PomodoroState.inactive);
+			}
+		});
+		
+		restartCountItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				completedPomodoros = 0;
+				updatePomodoroInfo();
 			}
 		});
 
