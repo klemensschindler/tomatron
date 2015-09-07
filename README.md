@@ -8,6 +8,8 @@ Tomatron aims to be a simple pomodoro timer with the following features:
 - Completed pomodoro count display
 - Desktop notifications on completed pomodoro/break
 - Minimal build dependencies
+- Minimalistic code base
+- Portable (no installer needed)
 
 The application is heavily inspired by tomighty: http://tomighty.org/.
 
