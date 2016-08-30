@@ -47,6 +47,8 @@ public class Tomatron {
 				populateMenu();
 			}
 		});
+		
+		timer.schedule(new EverySecond(), 0, 1000L);
 	}
 	
 	private void displayDesktopNotification(String summary, String message)
@@ -76,6 +78,7 @@ public class Tomatron {
 				
 				if (secondsRemaining <= 0) {
 					// A break or pomodoro is finished
+
 					switch (state) {
 					case pomodoro:
 						displayDesktopNotification("Pomodoro finished", "Time for a break!");
@@ -165,8 +168,6 @@ public class Tomatron {
 		pausedItem.setEnabled(false);
 		addTimeItem.setEnabled(true);
 		
-		timer.cancel();
-		
 		state = newState;
 		switch (state) {
 		case pomodoro:
@@ -177,22 +178,16 @@ public class Tomatron {
 			paused = false;
 			addTimeItem.setEnabled(true);
 			secondsRemaining = 25 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
 			break;
 		case shortBreak:
 			shortBreakItem.setLabel("Restart Short Break");
 			cancelItem.setLabel("Cancel Break");
 			secondsRemaining = 5 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
 			break;
 		case longBreak:
 			longBreakItem.setLabel("Restart Long Break");
 			cancelItem.setLabel("Cancel Break");
 			secondsRemaining = 15 * 60;
-			timer = new Timer();
-			timer.scheduleAtFixedRate(new EverySecond(), 0, 1000L);
 			break;
 		case inactive:
 			cancelItem.setEnabled(false);
