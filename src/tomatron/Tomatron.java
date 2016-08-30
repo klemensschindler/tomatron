@@ -88,6 +88,9 @@ public class Tomatron {
 					default:
 						break;
 					}
+					
+					pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", completedPomodoros));
+					
 					setState(PomodoroState.inactive);
 				}
 			}
@@ -99,8 +102,6 @@ public class Tomatron {
 	 * Updates the tray icon and tooltip
 	 */
 	private void updatePomodoroInfo() {
-		pomodoroCountItem.setEnabled(false);
-		pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", completedPomodoros));
 		String shortTimeLeftString;
 		if (secondsRemaining > 60) {
 			shortTimeLeftString = Integer.toString(secondsRemaining / 60);
@@ -208,6 +209,7 @@ public class Tomatron {
 	private void populateMenu() {
 		final PopupMenu popup = new PopupMenu();
 		popup.add(pomodoroCountItem);
+		pomodoroCountItem.setEnabled(false);
 		popup.addSeparator();
 		popup.add(pomodoroItem);
 		popup.add(addTimeItem);
@@ -261,6 +263,7 @@ public class Tomatron {
 		restartCountItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				completedPomodoros = 0;
+				pomodoroCountItem.setLabel(String.format("Completed Pomodoros: %d", completedPomodoros));
 				updatePomodoroInfo();
 			}
 		});
